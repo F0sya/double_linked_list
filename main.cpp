@@ -42,6 +42,7 @@ public:
         size++;
     }
 
+
     void pop_front() {
         if (head == nullptr) return;
         Element<T>* temp = head;
