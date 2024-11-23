@@ -1,14 +1,15 @@
 ﻿#include <iostream>
 using namespace std;
 
-template <typename T> class Element {
+
+template <typename T>
+class Element {
 public:
     T value;
     Element* next;
     Element* prev;
-    Element() : value(), next(nullptr), prev(nullptr) {}
+
     Element(T value) : value(value), next(nullptr), prev(nullptr) {}
-    ~Element() = default;
 };
 
 template <typename T>
@@ -29,162 +30,197 @@ public:
         }
     }
 
-    void Enqueue_front(T val) {
-        Element<T>* newElement = new Element<T>(val);
-        if (tail == nullptr) {
-            head = tail = newElement;
+    void push_back(T val) {
+        Element<T>* newNode = new Element<T>(val);
+        if (tail) {
+            tail->next = newNode;
+            newNode->prev = tail;
+            tail = newNode;
         }
         else {
-            tail->next = newElement;
-            newElement->prev = tail;
-            tail = newElement;
+            head = tail = newNode;
         }
         size++;
     }
 
-    void pop_front() {
-        if (head == nullptr) return;
-        Element<T>* temp = head;
-        head = head->next;
-        if (head == nullptr) {
-            tail = nullptr;
+    void pop_back() {
+        if (!tail) return;
+        Element<T>* temp = tail;
+        tail = tail->prev;
+        if (tail) {
+            tail->next = nullptr;
         }
         else {
-            head->prev = nullptr;
+            head = nullptr;
         }
         delete temp;
         size--;
     }
 
-    bool IsEmpty() const {
-        return head == nullptr;
-    }
-
-    T* GetHeadValue() const {
-        if (head != nullptr) {
-            return head->value;
-        }
-        throw runtime_error("Queue is empty");
+    int getSize() const {
+        return size;
     }
 
     Element<T>* getHead() const {
         return head;
     }
 
-    void Show() const {
-        Element<T>* temp = head;
-        while (temp != nullptr) {
-            cout << temp->value << " ";
-            temp = temp->next;
+    Element<T>* getTail() const {
+        return tail;
+    }
+
+    bool isEmpty() const {
+        return size == 0;
+    }
+
+
+    T getAt(int index) const {
+        if (index < 0 || index >= size) {
+            throw out_of_range("Index out of range");
         }
-        cout << endl;
-    }
-
-};
-
-template <typename T>
-class Queue {
-private:
-    DoublyLinkedList<T> list;
-public:
-    void Enqueue(T val) {
-        list.Enqueue_front(val);
-    }
-
-    void Dequeue() {
-        list.pop_front();
-    }
-
-    bool IsEmpty() const {
-        return list.IsEmpty();
-    }
-
-    T Front() const {
-        return list.GetHeadValueValue();
-    }
-
-    T* getHead() const {
-        return list.GetHeadValue();
-    }
-
-    void Show() const {
-        list.Show();
-    }
-
-    Queue clone() const {
-        Queue newQueue;
-        Element* temp = this->getHead();;
-        Queue tempQueue;
-        while (temp) {
-            tempQueue.Enqueue(temp->data);
-            temp = temp->next;
-        }
-        temp = tempQueue.getHead();;
-        while (temp) {
-            newQueue.Enqueue(temp->data);
-            temp = temp->next;
-        }
-
-        return newQueue;
-    }
-
-    Queue operator+(const Queue& other) {
-        Queue result;
-        Element<T>* current = this->getHead();;
-
-        while (current != nullptr) {
-            result.Enqueue(current->data);
+        Element<T>* current = head;
+        for (int i = 0; i < index; ++i) {
             current = current->next;
         }
-
-        Element<T>* current2 = other.getHead();;
-        while (current2 != nullptr) {
-            result.Enqueue(current2->data);
-            current2 = current2->next;
-        }
-
-        return result;
+        return current->value;
     }
 
-    Queue operator*(const Queue& other) {
-        Queue result;
-        Element<T>* current1 = this->list.getHead();
-        Element<T>* current2;
-
-        while (current1 != nullptr) {
-            current2 = other.list.getHead();
-            while (current2 != nullptr) {
-                if (current1->value == current2->value) {
-                    result.Enqueue(current1->value);
-                    break;
-                }
-                current2 = current2->next;
-            }
-            current1 = current1->next;
+    void setAt(int index, T value) {
+        if (index < 0 || index >= size) {
+            throw out_of_range("Index out of range");
         }
-
-        return result;
+        Element<T>* current = head;
+        for (int i = 0; i < index; ++i) {
+            current = current->next;
+        }
+        current->value = value;
     }
 };
 
 
+template <typename T>
+class Array {
+private:
+    DoublyLinkedList<T> list;
+    int size;
+    int capacity;
+    int grow;
+
+public:
+    Array(int initialSize = 0, int growSize = 1)
+        : size(0), capacity(initialSize), grow(growSize) {
+        setSize(initialSize);
+    }
+
+
+    void setSize(int newSize, int growSize = 1) {
+        if (newSize > capacity) {
+            capacity = newSize + growSize;
+        }
+        if (newSize < size) {
+            for (int i = size - 1; i >= newSize; --i) {
+                list.pop_back();
+            }
+        }
+        size = newSize;
+    }
+
+    int getSize() const {
+        return size;
+    }
+
+    bool isEmpty() const {
+        return list.isEmpty();
+    }
+
+    void freeExtra() {
+        setSize(size);
+    }
+
+    void removeAll() {
+        list.clear();
+        size = 0;
+    }
+
+    T getAt(int index) const {
+        return list.getAt(index);
+    }
+
+    void setAt(int index, T value) {
+        list.setAt(index, value);
+    }
+
+    T& operator[](int index) {
+        return list.getAt(index);
+    }
+
+    void add(T value) {
+        if (size == capacity) {
+            setSize(capacity + grow);
+        }
+        list.push_back(value);
+    }
+
+    Array<T> operator+(const Array<T>& other) {
+        Array<T> result(size + other.size);
+        for (int i = 0; i < size; ++i) {
+            result.add(getAt(i));
+        }
+        for (int i = 0; i < other.size; ++i) {
+            result.add(other.getAt(i));
+        }
+        return result;
+    }
+
+    Array<T>& operator=(const Array<T>& other) {
+        if (this != &other) {
+            removeAll();
+            for (int i = 0; i < other.size; ++i) {
+                add(other.getAt(i));
+            }
+        }
+        return *this;
+    }
+
+    T* getData() {
+        T* data = new T[size];
+        for (int i = 0; i < size; ++i) {
+            data[i] = getAt(i);
+        }
+        return data;
+    }
+
+    void insertAt(int index, T value) {
+        if (index < 0 || index > size) {
+            throw out_of_range("Index out of range");
+        }
+        if (size == capacity) {
+            setSize(capacity + grow);
+        }
+        for (int i = size; i > index; --i) {
+            setAt(i, getAt(i - 1));
+        }
+        setAt(index, value);
+        size++;
+    }
+
+    void removeAt(int index) {
+        if (index < 0 || index >= size) {
+            throw out_of_range("Index out of range");
+        }
+        for (int i = index; i < size - 1; ++i) {
+            setAt(i, getAt(i + 1));
+        }
+        list.pop_back();
+        size--;
+    }
+
+    int getUpperBound() const {
+        return size - 1;
+    }
+
+};
 
 int main() {
-
-
-    Queue<int> queue1;
-    queue1.Enqueue(1);
-    queue1.Enqueue(2);
-    queue1.Enqueue(3);
-
-    Queue<int> queue2;
-    queue2.Enqueue(2);
-    queue2.Enqueue(3);
-    queue2.Enqueue(4);
-
-    Queue<int> result_queue = queue1 * queue2;
-
-    cout << "Result: ";
-    result_queue.Show();
     return 0;
 }
